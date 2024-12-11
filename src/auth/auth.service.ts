@@ -42,13 +42,16 @@ export class AuthService {
     const hashedPassword = await bcrypt.hash(signUpDto.password, 10);
 
     // Insert into Supabase
-    const { data, error } = await this.supabase.from('users').insert([
-      {
-        email: signUpDto.email,
-        password: hashedPassword,
-        name: signUpDto.name,
-      },
-    ]);
+    const { data, error } = await this.supabase
+      .from('users')
+      .insert([
+        {
+          email: signUpDto.email,
+          password: hashedPassword,
+          name: signUpDto.name,
+        },
+      ])
+      .select();
 
     if (error) throw error;
 
