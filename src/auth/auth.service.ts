@@ -17,6 +17,27 @@ export class AuthService {
     );
   }
 
+  async validateUser(email: string, password: string): Promise<any> {
+    const { data: user, error } = await this.supabase
+      .from('users')
+      .select()
+      .eq('email', email)
+      .single();
+
+    if (error || !user) {
+      return null;
+    }
+
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+
+    if (isPasswordValid) {
+      const { password, ...result } = user;
+      return result;
+    }
+
+    return null;
+  }
+
   async signUp(signUpDto: SignUpDto) {
     const hashedPassword = await bcrypt.hash(signUpDto.password, 10);
 
