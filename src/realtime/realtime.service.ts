@@ -1,4 +1,4 @@
-import { Injectable, OnModuleInit } from '@nestjs/common';
+import { INestApplication, Injectable, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { WebSocketServer } from 'ws';
 import { RealtimeClient } from '@openai/realtime-api-beta';
@@ -15,12 +15,17 @@ export class RealtimeService implements OnModuleInit {
     }
   }
 
-  onModuleInit() {
-    const port = this.configService.get<number>('REALTIME_WS_PORT') || 8081;
-    this.wss = new WebSocketServer({ port });
+  initialize(app: INestApplication) {
+    const server = app.getHttpServer();
+    this.wss = new WebSocketServer({
+      server,
+      path: '/realtime',
+    });
     this.wss.on('connection', this.connectionHandler.bind(this));
-    console.log(`[RealtimeRelay] Listening on ws://localhost:${port}`);
+    console.log('[RealtimeRelay] WebSocket server initialized');
   }
+
+  onModuleInit() {}
 
   private async connectionHandler(ws: WebSocket, req: any) {
     if (!req.url) {
@@ -32,7 +37,7 @@ export class RealtimeService implements OnModuleInit {
     const url = new URL(req.url, `http://${req.headers.host}`);
     const pathname = url.pathname;
 
-    if (pathname !== '/') {
+    if (pathname !== '/realtime') {
       this.log(`Invalid pathname: "${pathname}"`);
       ws.close();
       return;
